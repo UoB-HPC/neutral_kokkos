@@ -1,0 +1,5 @@
+width   1.0e0   // The width of the problem domain in m
+height  1.0e0   // The height of the problem domain in m
+depth   1.0e0   // The depth of the problem domain in m
+max_dt  1.0e-2  // The maximum allowed timestep in s
+sim_end 1.0e1   // The end time in seconds for the simulation
