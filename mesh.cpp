@@ -5,42 +5,42 @@
 #include <stdlib.h>
 
 // Initialise the mesh describing variables
-void initialise_mesh_2d(Mesh* mesh) {
-  allocate_data(&mesh->edgex, (mesh->local_nx + 1));
-  allocate_data(&mesh->edgey, (mesh->local_ny + 1));
-  allocate_data(&mesh->edgedx, (mesh->local_nx + 1));
-  allocate_data(&mesh->edgedy, (mesh->local_ny + 1));
-  allocate_data(&mesh->celldx, (mesh->local_nx + 1));
-  allocate_data(&mesh->celldy, (mesh->local_ny + 1));
+void initialise_mesh_2d(Mesh &mesh) {
+  allocate_data(mesh.edgex,  (mesh.local_nx + 1));
+  allocate_data(mesh.edgey,  (mesh.local_ny + 1));
+  allocate_data(mesh.edgedx, (mesh.local_nx + 1));
+  allocate_data(mesh.edgedy, (mesh.local_ny + 1));
+  allocate_data(mesh.celldx, (mesh.local_nx + 1));
+  allocate_data(mesh.celldy, (mesh.local_ny + 1));
 
-  mesh_data_init_2d(mesh->local_nx, mesh->local_ny, mesh->global_nx,
-                    mesh->global_ny, mesh->pad, mesh->x_off, mesh->y_off,
-                    mesh->width, mesh->height, mesh->edgex, mesh->edgey,
-                    mesh->edgedx, mesh->edgedy, mesh->celldx, mesh->celldy);
+  mesh_data_init_2d(mesh.local_nx, mesh.local_ny, mesh.global_nx,
+                    mesh.global_ny, mesh.pad, mesh.x_off, mesh.y_off,
+                    mesh.width, mesh.height, mesh.edgex, mesh.edgey,
+                    mesh.edgedx, mesh.edgedy, mesh.celldx, mesh.celldy);
 
-  allocate_data(&mesh->north_buffer_out, (mesh->local_nx + 1) * mesh->pad);
-  allocate_data(&mesh->east_buffer_out, (mesh->local_ny + 1) * mesh->pad);
-  allocate_data(&mesh->south_buffer_out, (mesh->local_nx + 1) * mesh->pad);
-  allocate_data(&mesh->west_buffer_out, (mesh->local_ny + 1) * mesh->pad);
-  allocate_data(&mesh->north_buffer_in, (mesh->local_nx + 1) * mesh->pad);
-  allocate_data(&mesh->east_buffer_in, (mesh->local_ny + 1) * mesh->pad);
-  allocate_data(&mesh->south_buffer_in, (mesh->local_nx + 1) * mesh->pad);
-  allocate_data(&mesh->west_buffer_in, (mesh->local_ny + 1) * mesh->pad);
+  allocate_data(mesh.north_buffer_out, (mesh.local_nx + 1) * mesh.pad);
+  allocate_data(mesh.east_buffer_out,  (mesh.local_ny + 1) * mesh.pad);
+  allocate_data(mesh.south_buffer_out, (mesh.local_nx + 1) * mesh.pad);
+  allocate_data(mesh.west_buffer_out,  (mesh.local_ny + 1) * mesh.pad);
+  allocate_data(mesh.north_buffer_in,  (mesh.local_nx + 1) * mesh.pad);
+  allocate_data(mesh.east_buffer_in,   (mesh.local_ny + 1) * mesh.pad);
+  allocate_data(mesh.south_buffer_in,  (mesh.local_nx + 1) * mesh.pad);
+  allocate_data(mesh.west_buffer_in,   (mesh.local_ny + 1) * mesh.pad);
 
-  allocate_host_data(&mesh->h_north_buffer_out,
-                     (mesh->local_nx + 1) * mesh->pad);
-  allocate_host_data(&mesh->h_east_buffer_out,
-                     (mesh->local_ny + 1) * mesh->pad);
-  allocate_host_data(&mesh->h_south_buffer_out,
-                     (mesh->local_nx + 1) * mesh->pad);
-  allocate_host_data(&mesh->h_west_buffer_out,
-                     (mesh->local_ny + 1) * mesh->pad);
-  allocate_host_data(&mesh->h_north_buffer_in,
-                     (mesh->local_nx + 1) * mesh->pad);
-  allocate_host_data(&mesh->h_east_buffer_in, (mesh->local_ny + 1) * mesh->pad);
-  allocate_host_data(&mesh->h_south_buffer_in,
-                     (mesh->local_nx + 1) * mesh->pad);
-  allocate_host_data(&mesh->h_west_buffer_in, (mesh->local_ny + 1) * mesh->pad);
+  allocate_host_data(mesh.h_north_buffer_out,
+                     (mesh.local_nx + 1) * mesh.pad);
+  allocate_host_data(mesh.h_east_buffer_out,
+                     (mesh.local_ny + 1) * mesh.pad);
+  allocate_host_data(mesh.h_south_buffer_out,
+                     (mesh.local_nx + 1) * mesh.pad);
+  allocate_host_data(mesh.h_west_buffer_out,
+                     (mesh.local_ny + 1) * mesh.pad);
+  allocate_host_data(mesh.h_north_buffer_in,
+                     (mesh.local_nx + 1) * mesh.pad);
+  allocate_host_data(mesh.h_east_buffer_in, (mesh.local_ny + 1) * mesh.pad);
+  allocate_host_data(mesh.h_south_buffer_in,
+                     (mesh.local_nx + 1) * mesh.pad);
+  allocate_host_data(mesh.h_west_buffer_in, (mesh.local_ny + 1) * mesh.pad);
 }
 
 // // Initialise the mesh describing variables

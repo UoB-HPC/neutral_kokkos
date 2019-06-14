@@ -49,7 +49,7 @@ void initialise_shared_data_2d(const int local_nx, const int local_ny,
                                const char* problem_def_filename,
                                const Kokkos::View<double *> edgex,
                                const Kokkos::View<double *> edgey,
-                               SharedData* shared_data);
+                               SharedData &shared_data);
 
 // Initialise state data in device specific manner
 void set_problem_2d(const int local_nx, const int local_ny, const int pad,

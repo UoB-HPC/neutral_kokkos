@@ -95,7 +95,7 @@ typedef struct {
 } Mesh;
 
 // Initialises the mesh
-void initialise_mesh_2d(Mesh* mesh);
+void initialise_mesh_2d(Mesh &mesh);
 void mesh_data_init_2d(const int local_nx, const int local_ny,
                        const int global_nx, const int global_ny, const int pad,
                        const int x_off, const int y_off, const double width,

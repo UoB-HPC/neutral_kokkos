@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
   // Store the dimensions of the mesh
   Mesh mesh;
   NeutralData neutral_data;
+
   neutral_data.neutral_params_filename = argv[1];
   mesh.global_nx =
       get_int_parameter("nx", neutral_data.neutral_params_filename);
@@ -63,15 +64,15 @@ int main(int argc, char *argv[])
   // Perform the general initialisation steps for the mesh etc
   initialise_devices(mesh.rank);
   initialise_comms(&mesh);
-  initialise_mesh_2d(&mesh);
+  initialise_mesh_2d(mesh);
   SharedData shared_data;
   initialise_shared_data_2d(mesh.local_nx, mesh.local_ny, mesh.pad, mesh.width, 
-      mesh.height, neutral_data.neutral_params_filename, mesh.edgex, mesh.edgey, &shared_data);
+      mesh.height, neutral_data.neutral_params_filename, mesh.edgex, mesh.edgey, shared_data);
 
   handle_boundary_2d(mesh.local_nx, mesh.local_ny, &mesh, shared_data.density,
                      NO_INVERT, PACK);
  
-  initialise_neutral_data(&neutral_data, &mesh);
+  initialise_neutral_data(neutral_data, mesh);
 
   // Make sure initialisation phase is complete
   barrier();
@@ -100,13 +101,13 @@ int main(int argc, char *argv[])
     solve_transport_2d(
         mesh.local_nx - 2 * mesh.pad, mesh.local_ny - 2 * mesh.pad,
         mesh.global_nx, mesh.global_ny, tt, mesh.pad, mesh.x_off, mesh.y_off,
-        mesh.dt, neutral_data.nparticles, &neutral_data.nlocal_particles,
+        mesh.dt, neutral_data.nparticles, neutral_data.nlocal_particles,
         mesh.neighbours, neutral_data.local_particles,
         shared_data.density, mesh.edgex, mesh.edgey, mesh.edgedx, mesh.edgedy,
         neutral_data.cs_scatter_table, neutral_data.cs_absorb_table,
         neutral_data.energy_deposition_tally, neutral_data.nfacets_reduce_array,
         neutral_data.ncollisions_reduce_array, neutral_data.nprocessed_reduce_array,
-        &facet_events, &collision_events);
+        facet_events, collision_events);
 
     barrier();
 
@@ -153,7 +154,7 @@ int main(int argc, char *argv[])
     printf("Final Wallclock %.9fs\n", wallclock);
     printf("Elapsed Simulation Time %.6fs\n", elapsed_sim_time);
   }
-
+  
   }
   Kokkos::finalize();
 

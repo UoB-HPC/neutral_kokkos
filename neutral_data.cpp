@@ -10,67 +10,68 @@
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 
 // Reads a cross section file
-// void read_cs_file(const char* filename, CrossSection* cs, Mesh* mesh);
+void read_cs_file(const char* filename, CrossSection& cs, Mesh& mesh);
 
 // Initialises the set of cross sections
-void initialise_cross_sections(NeutralData* neutral_data, Mesh* mesh);
+void initialise_cross_sections(NeutralData& neutral_data, Mesh& mesh);
 
 // Initialises all of the neutral-specific data structures.
-void initialise_neutral_data(NeutralData* neutral_data, Mesh* mesh) {
-  const int pad = mesh->pad;
-  const int local_nx = mesh->local_nx - 2 * pad;
-  const int local_ny = mesh->local_ny - 2 * pad;
+void initialise_neutral_data(NeutralData& neutral_data, Mesh& mesh) {
+  const int pad = mesh.pad;
+  const int local_nx = mesh.local_nx - 2 * pad;
+  const int local_ny = mesh.local_ny - 2 * pad;
 
-  neutral_data->nparticles =
-      get_int_parameter("nparticles", neutral_data->neutral_params_filename);
-  neutral_data->initial_energy = get_double_parameter(
-      "initial_energy", neutral_data->neutral_params_filename);
+  neutral_data.nparticles =
+      get_int_parameter("nparticles", neutral_data.neutral_params_filename);
+  neutral_data.initial_energy = get_double_parameter(
+      "initial_energy", neutral_data.neutral_params_filename);
 
   int nkeys = 0;
   char* keys = (char*)malloc(sizeof(char) * MAX_KEYS * MAX_STR_LEN);
   double* values = (double*)malloc(sizeof(double) * MAX_KEYS);
 
-  if (!get_key_value_parameter_double("source", neutral_data->neutral_params_filename,
+  if (!get_key_value_parameter_double("source", neutral_data.neutral_params_filename,
                                keys, values, &nkeys)) {
     TERMINATE("Parameter file %s did not contain a source entry.\n",
-              neutral_data->neutral_params_filename);
+              neutral_data.neutral_params_filename);
   }
 
   // The last four keys are the bound specification
-  const double source_xpos = values[nkeys - 4] * mesh->width;
-  const double source_ypos = values[nkeys - 3] * mesh->height;
-  const double source_width = values[nkeys - 2] * mesh->width;
-  const double source_height = values[nkeys - 1] * mesh->height;
+  const double source_xpos = values[nkeys - 4] * mesh.width;
+  const double source_ypos = values[nkeys - 3] * mesh.height;
+  const double source_width = values[nkeys - 2] * mesh.width;
+  const double source_height = values[nkeys - 1] * mesh.height;
 
   Kokkos::View<double*> mesh_edgex_0;
   Kokkos::View<double*> mesh_edgey_0;
   Kokkos::View<double*> mesh_edgex_1;
   Kokkos::View<double*> mesh_edgey_1;
 
-  allocate_data(&mesh_edgex_0, 1);
-  allocate_data(&mesh_edgey_0, 1);
-  allocate_data(&mesh_edgex_1, 1);
-  allocate_data(&mesh_edgey_1, 1);
+  allocate_data(mesh_edgex_0, 1);
+  allocate_data(mesh_edgey_0, 1);
+  allocate_data(mesh_edgex_1, 1);
+  allocate_data(mesh_edgey_1, 1);
 
-  mesh_edgex_0[0] = mesh->edgex[mesh->x_off + pad];
-  mesh_edgey_0[0] = mesh->edgey[mesh->y_off + pad];
-  mesh_edgex_1[0] = mesh->edgex[local_nx + mesh->x_off + pad];
-  mesh_edgey_1[0] = mesh->edgey[local_ny + mesh->y_off + pad];
- 
+  Kokkos::parallel_for(1, KOKKOS_LAMBDA (int pp) {
+    mesh_edgex_0[0] = mesh.edgex[mesh.x_off + pad];
+    mesh_edgey_0[0] = mesh.edgey[mesh.y_off + pad];
+    mesh_edgex_1[0] = mesh.edgex[local_nx + mesh.x_off + pad];
+    mesh_edgey_1[0] = mesh.edgey[local_ny + mesh.y_off + pad];
+  });
 
   Kokkos::View<double*>::HostMirror rank_xpos_0;
   Kokkos::View<double*>::HostMirror rank_ypos_0;
   Kokkos::View<double*>::HostMirror rank_xpos_1;
   Kokkos::View<double*>::HostMirror rank_ypos_1;
-  allocate_host_data(&rank_xpos_0, 1);
-  allocate_host_data(&rank_ypos_0, 1);
-  allocate_host_data(&rank_xpos_1, 1);
-  allocate_host_data(&rank_ypos_1, 1);
+  allocate_host_data(rank_xpos_0, 1);
+  allocate_host_data(rank_ypos_0, 1);
+  allocate_host_data(rank_xpos_1, 1);
+  allocate_host_data(rank_ypos_1, 1);
 
-  copy_buffer_RECEIVE(1, &mesh_edgex_0, &rank_xpos_0);
-  copy_buffer_RECEIVE(1, &mesh_edgey_0, &rank_ypos_0);
-  copy_buffer_RECEIVE(1, &mesh_edgex_1, &rank_xpos_1);
-  copy_buffer_RECEIVE(1, &mesh_edgey_1, &rank_ypos_1);
+  copy_buffer_RECEIVE(1, mesh_edgex_0, rank_xpos_0);
+  copy_buffer_RECEIVE(1, mesh_edgey_0, rank_ypos_0);
+  copy_buffer_RECEIVE(1, mesh_edgex_1, rank_xpos_1);
+  copy_buffer_RECEIVE(1, mesh_edgey_1, rank_ypos_1);
 
   // Calculate the shaded bounds
   const double local_particle_left_off = max(0.0, source_xpos - rank_xpos_0[0]);
@@ -99,41 +100,41 @@ void initialise_neutral_data(NeutralData* neutral_data, Mesh* mesh) {
   // Calculate the number of particles we need based on the shaded area that
   // is covered by our source
   const double nlocal_particles_real =
-      neutral_data->nparticles *
+      neutral_data.nparticles *
       (local_particle_width * local_particle_height) /
       (source_width * source_height);
 
   // Rounding hack to make sure correct number of particles is selected
-  neutral_data->nlocal_particles = nlocal_particles_real + 0.5;
+  neutral_data.nlocal_particles = nlocal_particles_real + 0.5;
 
-  size_t allocation = allocate_data(&neutral_data->energy_deposition_tally,
+  size_t allocation = allocate_data_atomic(neutral_data.energy_deposition_tally,
                                     local_nx * local_ny);
 
-  allocation += allocate_uint64_data(&neutral_data->nfacets_reduce_array,
-                                     neutral_data->nparticles);
-  allocation += allocate_uint64_data(&neutral_data->ncollisions_reduce_array,
-                                     neutral_data->nparticles);
-  allocation += allocate_uint64_data(&neutral_data->nprocessed_reduce_array,
-                                     neutral_data->nparticles);
+  allocation += allocate_uint64_data(neutral_data.nfacets_reduce_array,
+                                     neutral_data.nparticles);
+  allocation += allocate_uint64_data(neutral_data.ncollisions_reduce_array,
+                                     neutral_data.nparticles);
+  allocation += allocate_uint64_data(neutral_data.nprocessed_reduce_array,
+                                     neutral_data.nparticles);
 
   // Inject some particles into the mesh if we need to
-  if (neutral_data->nlocal_particles) {
+  if (neutral_data.nlocal_particles) {
     printf("Allocated %.4fGB of data.\n", allocation / GB);
     allocation += inject_particles(
-        neutral_data->nparticles, mesh->global_nx, mesh->local_nx,
-        mesh->local_ny, pad, local_particle_left_off, local_particle_bottom_off,
-        local_particle_width, local_particle_height, mesh->x_off, mesh->y_off,
-        mesh->dt, mesh->edgex, mesh->edgey, neutral_data->initial_energy,
-        &neutral_data->local_particles);
+        neutral_data.nparticles, mesh.global_nx, mesh.local_nx,
+        mesh.local_ny, pad, local_particle_left_off, local_particle_bottom_off,
+        local_particle_width, local_particle_height, mesh.x_off, mesh.y_off,
+        mesh.dt, mesh.edgex, mesh.edgey, neutral_data.initial_energy,
+        neutral_data.local_particles);
   }
-
+  
   printf("Allocated %.4fGB of data.\n", allocation / GB);
 
   initialise_cross_sections(neutral_data, mesh);
 }
 
 // Reads in a cross-sectional data file
-void read_cs_file(const char* filename, CrossSection* cs, Mesh* mesh) {
+void read_cs_file(const char* filename, CrossSection& cs, Mesh& mesh) {
   FILE* fp = fopen(filename, "r");
   if (!fp) {
     TERMINATE("Could not open the cross section file: %s\n", filename);
@@ -141,32 +142,32 @@ void read_cs_file(const char* filename, CrossSection* cs, Mesh* mesh) {
 
   // Count the number of entries in the file
   int ch;
-  cs->nentries = 0;
+  cs.nentries = 0;
   while ((ch = fgetc(fp)) != EOF) {
     if (ch == '\n') {
-      cs->nentries++;
+      cs.nentries++;
     }
   }
 
-  if (mesh->rank == MASTER) {
-    printf("File %s contains %d entries\n", filename, cs->nentries);
+  if (mesh.rank == MASTER) {
+    printf("File %s contains %d entries\n", filename, cs.nentries);
   }
 
   rewind(fp);
 
   Kokkos::View<double*>::HostMirror h_keys;
   Kokkos::View<double*>::HostMirror h_values;
-  allocate_host_data(&h_keys, cs->nentries);
-  allocate_host_data(&h_values, cs->nentries);
+  allocate_host_data(h_keys, cs.nentries);
+  allocate_host_data(h_values, cs.nentries);
 
-  for (int ii = 0; ii < cs->nentries; ++ii) {
+  for (int ii = 0; ii < cs.nentries; ++ii) {
     // Skip whitespace tokens
     while ((ch = fgetc(fp)) == ' ' || ch == '\n' || ch == '\r') {
     };
 
     // Jump out if we reach the end of the file early
     if (ch == EOF) {
-      cs->nentries = ii;
+      cs.nentries = ii;
       break;
     }
 
@@ -178,14 +179,14 @@ void read_cs_file(const char* filename, CrossSection* cs, Mesh* mesh) {
     fscanf(fp, "%lf", &h_values[ii]);
   }
 
-  move_host_buffer_to_device(cs->nentries, &h_keys, &cs->keys);
-  move_host_buffer_to_device(cs->nentries, &h_values, &cs->values);
+  move_host_buffer_to_device(cs.nentries, h_keys, cs.keys);
+  move_host_buffer_to_device(cs.nentries, h_values, cs.values);
 }
 
 // Initialises the state
-void initialise_cross_sections(NeutralData* neutral_data, Mesh* mesh) {
-  neutral_data->cs_scatter_table = (CrossSection*)malloc(sizeof(CrossSection));
-  neutral_data->cs_absorb_table = (CrossSection*)malloc(sizeof(CrossSection));
-  read_cs_file(CS_SCATTER_FILENAME, neutral_data->cs_scatter_table, mesh);
-  read_cs_file(CS_CAPTURE_FILENAME, neutral_data->cs_absorb_table, mesh);
+void initialise_cross_sections(NeutralData &neutral_data, Mesh& mesh) {
+  // neutral_data->cs_scatter_table = (CrossSection*)malloc(sizeof(CrossSection));
+  // neutral_data->cs_absorb_table = (CrossSection*)malloc(sizeof(CrossSection));
+  read_cs_file(CS_SCATTER_FILENAME, neutral_data.cs_scatter_table, mesh);
+  read_cs_file(CS_CAPTURE_FILENAME, neutral_data.cs_absorb_table, mesh);
 }

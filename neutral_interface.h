@@ -12,22 +12,22 @@ void solve_transport_2d(
     const int nx, const int ny, const int global_nx, const int global_ny,
     const uint64_t master_key, const int pad, const int x_off, const int y_off, 
     const double dt, const int ntotal_particles,
-    int* nparticles,
+    int &nparticles,
     const int* neighbours,
-    Kokkos::View<Particle* > particles,
+    Particle &particles,
     Kokkos::View<const double *> density,
     Kokkos::View<const double *> edgex,
     Kokkos::View<const double *> edgey,
     Kokkos::View<const double *> edgedx,
     Kokkos::View<const double *> edgedy,
-    CrossSection* cs_scatter_table,
-    CrossSection* cs_absorb_table,
-    const Kokkos::View<double *> energy_deposition_tally,
+    CrossSection &cs_scatter_table,
+    CrossSection &cs_absorb_table,
+    const Kokkos::View<double*, Kokkos::MemoryTraits<Kokkos::Atomic>> energy_deposition_tally,
     Kokkos::View<uint64_t *> reduce_array0,
     Kokkos::View<uint64_t *> reduce_array1,
     Kokkos::View<uint64_t *> reduce_array2,
-    uint64_t* facet_events,
-    uint64_t* collision_events);
+    uint64_t &facet_events,
+    uint64_t &collision_events);
 
 // Initialises a new particle ready for tracking
 size_t inject_particles(const int nparticles, const int global_nx,
@@ -40,7 +40,7 @@ size_t inject_particles(const int nparticles, const int global_nx,
     const Kokkos::View<double *> edgex,
     const Kokkos::View<double *> edgey,
     const double initial_energy,
-    Kokkos::View<Particle* >* particles);
+    Particle &particles);
 
 
 // Validates the results of the simulation
